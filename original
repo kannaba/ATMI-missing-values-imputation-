@@ -1,8 +1,6 @@
 %%iris
 importdata("iris.csv");
 ori = readtable("iris.csv");
-Name = 'iris';
-
 ori.species = categorical(ori.species); 
 oldnames = {'setosa', 'versicolor', 'virginica'};
 newnames = {'1', '2', '3'};
@@ -10,16 +8,12 @@ ori.species = renamecats(ori.species, oldnames, newnames);
 ori.species = str2double(cellstr(ori.species));
 
 ori = table2array(ori);
-
-gamma = 0;
 cat_cols = [];
 num_cols = 1:4;
-
 for t = num_cols
     ori( : , t ) = ( ori( : , t ) - min( ori( : , t ) ) ) / ( max( ori( : , t ) ) - min( ori( : , t ) ) );
 end
 x = ori;
-
 x=array2table(x);
 
 lct_nom = [];
@@ -27,7 +21,6 @@ lct_ord = [];
 lct_num = [1,2,3,4];
 lct_label = 5;
 new_order = [lct_nom, lct_ord, lct_num, lct_label];
-
 ori = ori(:, new_order);
 ori_label = ori(:,end);
 ori(:,end)=[];
@@ -36,8 +29,6 @@ com_ori = ori;
 pm.no_ord_att = 0;
 pm.no_nom_att = 0;
 pm.no_num_att = 4;
-
-% k = optimal_cluster_number(ori, 8,num_cols,cat_cols); 
 k = 3;
 
 % get orignial cluster 
