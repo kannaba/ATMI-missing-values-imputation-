@@ -6,7 +6,6 @@ oldnames = {'setosa', 'versicolor', 'virginica'};
 newnames = {'1', '2', '3'};
 ori.species = renamecats(ori.species, oldnames, newnames);
 ori.species = str2double(cellstr(ori.species));
-
 ori = table2array(ori);
 cat_cols = [];
 num_cols = 1:4;
@@ -15,7 +14,6 @@ for t = num_cols
 end
 x = ori;
 x=array2table(x);
-
 lct_nom = [];
 lct_ord = [];
 lct_num = [1,2,3,4];
@@ -25,13 +23,36 @@ ori = ori(:, new_order);
 ori_label = ori(:,end);
 ori(:,end)=[];
 com_ori = ori;
-
 pm.no_ord_att = 0;
 pm.no_nom_att = 0;
 pm.no_num_att = 4;
 k = 3;
 
-% get orignial cluster 
+%% wine
+importdata("wine.csv");
+ori = readtable("wine.csv");
+Name = 'wine';
+ori = [ori(:,2:end), ori(:,1)];
+x = ori;
+ori = table2array(ori);
+gamma = 0;
+cat_cols = [];
+num_cols = 1:13;
+lct_nom = [];
+lct_ord = [];
+lct_num = [1,2,3,4,5,6,7,8,9,10,11,12,13];
+lct_label = 14;
+new_order = [lct_nom, lct_ord, lct_num, lct_label];
+ori = ori(:, new_order);
+ori_label = ori(:,end);
+ori(:,end)=[];
+pm.no_ord_att = 0;
+pm.no_nom_att = 0;
+pm.no_num_att = 13;
+k = 3;
+
+
+%% get orignial cluster 
 [ori_idx, ori_modes] = kmeans(ori, k );
 %compute  complete original pure and ARI
 ori_purity = purity_score(ori_label, ori_idx);
