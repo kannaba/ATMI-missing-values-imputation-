@@ -1,0 +1,90 @@
+%% TA
+load TA;
+ori = TA;
+lct_nom = [1,2,3,4];
+lct_ord = [ ];
+lct_num = [5];
+lct_label = 6;
+cat_cols = 1:4;
+num_cols = 5;
+for t = lct_num
+    ori( : , t ) = ( ori( : , t ) - min( ori( : , t ) ) ) / ( max( ori( : , t ) ) - min( ori( : , t ) ) );
+end
+x = array2table(ori);
+new_order = [lct_nom, lct_ord, lct_num, lct_label];
+ori = ori(:, new_order);
+ori_label = ori(:,end);
+ori(:,end)=[];
+pm.no_ord_att = 0;
+pm.no_nom_att = 4;
+pm.no_num_att = 1; 
+k = 3;
+gamma = 0.8;
+
+
+%%DS
+ori = readtable("diagnosis.csv");
+ori = table2array(ori);
+lct_nom = [2,3,4,5,6];
+lct_ord = [];
+lct_num = [1];
+lct_label = 7;
+for t = lct_num
+    ori( : , t ) = ( ori( : , t ) - min( ori( : , t ) ) ) / ( max( ori( : , t ) ) - min( ori( : , t ) ) );
+end
+x = ori;
+x=array2table(x);
+new_order = [lct_nom, lct_ord, lct_num, lct_label];
+ori = ori(:, new_order);
+ori_label = ori(:,end);
+ori(:,end)=[];
+pm.no_ord_att = 0;
+pm.no_nom_att = 5;
+pm.no_num_att = 1;
+k = 2;
+cat_cols = 1:5;
+num_cols = 6;
+gamma = 0.8;
+
+
+%%BC
+load mbc.mat;
+ori = mbc;
+ori = [ori(:,2:end), ori(:,1)];
+ori = rmmissing(ori);
+ori = table2array(ori);
+lct_nom = [5,7,8,9];
+lct_ord = [2,6];
+lct_num = [1,3,4];
+lct_label = 10;
+for t = lct_num
+    ori( : , t ) = ( ori( : , t ) - min( ori( : , t ) ) ) / ( max( ori( : , t ) ) - min( ori( : , t ) ) );
+end
+x = ori;
+x=array2table(x);
+new_order = [lct_nom, lct_ord, lct_num, lct_label];
+ori = ori(:, new_order);
+ori_label = ori(:,end);
+ori(:,end)=[];
+pm.no_ord_att = 2;
+pm.no_nom_att = 4;
+pm.no_num_att = 3;
+k = 2;
+gamma = 0.66;
+cat_cols = 1:6;
+num_cols = 7:9;
+
+
+
+%% get orignial cluster 
+[ori_idx, ori_modes] = k_prototypes(ori, k, gamma, num_cols, cat_cols);
+%compute  complete original pure and ARI
+ori_purity = purity_score(ori_label, ori_idx);
+[~, ori_ARI] = randindex(ori_label, ori_idx);
+% ori_nmi = nmi(ori_label, ori_idx);
+ori_cvi = silhouette_index(ori, ori_idx,'y',num_cols,cat_cols);
+ori_dbi = DBI(ori,ori, ori_idx,'y',num_cols,cat_cols);
+ori_ma = NaN;
+ori_mrmse= NaN;
+ori_acc = NaN;
+ori_rmse = NaN;
