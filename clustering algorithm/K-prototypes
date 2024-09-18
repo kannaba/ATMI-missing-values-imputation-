@@ -1,0 +1,36 @@
+function [cluster_labels, centroids] = k_prototypes(X, K, gamma, num_cols, cat_cols)
+    % X: data
+    % K: cluster numbers
+
+    [N, D] = size(X);
+    cluster_labels = zeros(N, 1);
+    centroids = X(randperm(N, K), :);
+
+    while true
+        old_cluster_labels = cluster_labels;
+        for i = 1:N
+            min_distance = inf;
+            for k = 1:K
+                num_distance = sum((X(i, num_cols) - centroids(k, num_cols)).^2);
+                cat_distance = sum(X(i, cat_cols) ~= centroids(k, cat_cols));
+                distance = num_distance + gamma * cat_distance;
+                if distance < min_distance
+                    min_distance = distance;
+                    cluster_labels(i) = k;
+                end
+            end
+        end
+
+        for k = 1:K
+            cluster_points = X(cluster_labels == k, :);
+            centroids(k, num_cols) = sum(cluster_points(:, num_cols)) / size(cluster_points, 1);
+            for j = cat_cols
+                centroids(k, j) = mode(cluster_points(:, j));
+            end
+        end
+
+        if isequal(cluster_labels, old_cluster_labels)
+            break;
+        end
+    end
+end
