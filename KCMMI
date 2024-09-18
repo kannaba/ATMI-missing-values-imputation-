@@ -1,0 +1,79 @@
+kmean_filled = x_ori;
+PBKmean_filled = PBK_impute(kmean_filled ,cat_cols, num_cols);
+
+if isnan(PBKmean_filled)
+    PBK_purity=NaN;
+    PBK_ARI=NaN;
+    PBK_cvi=NaN;
+    PBK_dbi=NaN;
+    PBK_mae=NaN;
+    PBK_rmse=NaN;
+else 
+    [PBK_idx,~] = kmeans(PBKmean_filled, k);
+    PBK_purity = purity_score(ori_label, PBK_idx);
+    [~, PBK_ARI] = randindex(ori_label, PBK_idx);
+    PBK_cvi = silhouette_index(PBKmean_filled,  PBK_idx,'y', cat_cols, num_cols);
+    PBK_dbi = DBI(ori,PBKmean_filled,PBK_idx,'y', cat_cols, num_cols);
+    [PBK_acc,PBK_mae, PBK_rmse,PBK_ma] = MixedAcc(ori, x_ori, PBKmean_filled, cat_cols, num_cols);
+end
+
+function centroids = computeCentroids(X, idx, K)
+    [m, n] = size(X);
+    centroids = zeros(K, n);
+    count = zeros(K, 1);
+    for i = 1:m
+        k = idx(i);
+        centroids(k, :) = centroids(k, :) + X(i, :);
+        count(k) = count(k) + 1;
+    end
+    centroids = centroids ./ count;
+end 
+
+function filledData = PBK_impute(data, cat_cols, num_cols)
+    completeData = data(~any(isnan(data), 2), :);
+    missingData = data(any(isnan(data), 2), :);
+    pk=3;
+    if isnan(completeData)
+        fprintf("completedata is empty");
+        return;
+    end
+    if isnan(pk)
+        filledData = NaN;
+        return;
+    end
+    [idx, centroids] = kmeans(completeData, pk);
+    missingIndices = find(any(isnan(data), 2));
+    for i = 1:size(missingData, 1)
+        sample = missingData(i, :);
+        nanIndices = isnan(sample);
+        distances = computeDistances(sample, centroids);
+        [~, minIdx] = min(distances);
+        sample = fillMissingValues(sample, completeData(idx == minIdx, :));
+        data(missingIndices(i), :) = sample;
+        completeData = [completeData; sample];
+        idx = [idx; minIdx];
+        centroids = computeCentroids(completeData, idx, pk);
+    end
+    filledData = data;
+end
+
+function distances = computeDistances(sample, completeData)
+    nonMissingIndices = ~isnan(sample);
+    sample = sample(nonMissingIndices);
+    completeData = completeData(:, nonMissingIndices);
+    numSamples = size(completeData, 1);
+    distances = zeros(numSamples, 1);
+    for i = 1:numSamples
+        distances(i) = norm(sample - completeData(i, :));
+    end
+end
+
+function filledSample = fillMissingValues(sample, clusterData)
+    nanIndices = isnan(sample);
+    distances = computeDistances(sample, clusterData);    
+    mnk = sqrt(size(clusterData,1));
+    [~, sortedIndices] = sort(distances);
+    nearestSamples = clusterData(sortedIndices(1:round(mnk)), :);
+    sample(nanIndices) = mean(nearestSamples(:, nanIndices));
+    filledSample = sample;
+end
