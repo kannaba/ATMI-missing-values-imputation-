@@ -1,0 +1,13 @@
+function accuracy = AccuracyScore(ori, x_ori, x_ori_filled)
+    [missing_row, missing_col] = find(isnan(x_ori));
+    correct_count = 0;
+
+    for i = 1:length(missing_row)
+        if x_ori_filled(missing_row(i), missing_col(i)) == ori(missing_row(i), missing_col(i))
+            correct_count = correct_count + 1;            
+        end
+    end
+
+    accuracy = correct_count / length(missing_row);
+    accuracy = round(accuracy,3);
+end
