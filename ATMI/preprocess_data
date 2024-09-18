@@ -1,0 +1,55 @@
+function [x_raw, map_nom_inv, map_ord_inv, map_num_inv] = preprocess_data(x_raw, lct_nom, lct_ord, lct_num, lct_label)
+    [n, d] = size(x_raw);
+
+    no_nom = length(lct_nom);
+    no_ord = length(lct_ord);
+    no_num = length(lct_num);
+    if no_nom + no_ord + no_num + 1 ~= d
+        disp('some attributes missed');
+    end
+
+    map_nom_inv = cell(1, no_nom);
+    map_ord_inv = cell(1, no_ord);
+    map_num_inv = cell(1, no_num);
+
+    for i = 1:no_nom
+        col = x_raw{:, lct_nom(i)};
+        unique_vals = unique(col(~isnan(col)));
+        map_nom = containers.Map(unique_vals, 1:length(unique_vals));
+        x_raw{:, lct_nom(i)}(~isnan(col)) = cell2mat(values(map_nom, num2cell(col(~isnan(col)))));
+        map_nom_inv{i} = containers.Map(values(map_nom), keys(map_nom));
+    end
+
+    for i = 1:no_ord
+        col = x_raw{:, lct_ord(i)};
+        unique_vals = unique(col(~isnan(col)));
+        map_ord = containers.Map(unique_vals, 1:length(unique_vals));
+        x_raw{:, lct_ord(i)}(~isnan(col)) = cell2mat(values(map_ord, num2cell(col(~isnan(col)))));
+        map_ord_inv{i} = containers.Map(values(map_ord), keys(map_ord));
+    end
+  
+
+  for i = 1:no_num
+      col = x_raw{:, lct_num(i)};
+      if ~all(isnan(col))
+          edges = [0, 0.1, 0.2, 0.3, 0.4,0.5, 0.6, 0.7, 0.8,0.9, 1];
+          [~, ~, bin] = histcounts(col, edges);
+          col_mapped = bin;
+          col_mapped(isnan(col)) = NaN;
+          x_raw{:, lct_num(i)} = col_mapped;
+          unique_bins = unique(bin(~isnan(bin)));
+          bin_means = arrayfun(@(b) mean(col(bin == b)), unique_bins);
+          map_num = containers.Map(unique_bins, bin_means);
+          map_num_inv{i} = map_num;
+      end
+  end
+    new_order = [lct_nom, lct_ord, lct_num, lct_label];
+    x_raw = x_raw(:, new_order);
+    x_double = varfun(@string, x_raw, 'OutputFormat', 'table');
+    x_raw = table2array(x_double);
+    x_raw = double(x_raw);
+end
+
+
+
+
