@@ -1,0 +1,28 @@
+%%
+function [idx, modes] = k_modes(X, k )
+    if k > size(X, 1)
+        error('k should not be greater than the number of rows in X');
+    end
+    modes = X(randperm(size(X, 1), k), :);
+
+    idx = zeros(size(X, 1), 1);
+    iterCount = 0;
+    maxIter=50;
+    while true
+        dists = pdist2(X, modes, 'hamming');
+        [~, idx] = min(dists, [], 2);
+        new_modes = zeros(k, size(X, 2));
+        for i = 1:k
+            if sum(idx == i) == 0
+                new_modes(i, :) = X(randi(size(X, 1)), :);
+            else
+                new_modes(i, :) = mode(X(idx == i, :));
+            end
+        end
+        if isequal(modes, new_modes) || iterCount >= maxIter
+            break;
+        end
+        modes = new_modes;
+        iterCount = iterCount + 1;
+    end
+end
