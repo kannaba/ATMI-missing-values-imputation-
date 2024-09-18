@@ -1,0 +1,61 @@
+x_ori = table2array(x);
+x_ori = x_ori(:,new_order);
+x_ori(:,end) = [];
+[x_raw, map_nom_inv, map_ord_inv, map_num_inv] = preprocess_data(x, lct_nom, lct_ord, lct_num, lct_label);
+x_raw_label = x_raw(:,end);
+%create S2 with missing value
+missing_samples = find(any(isnan(x_raw), 2));
+
+S2 = x_raw(missing_samples, :); 
+%% S2 sorted
+num_nans = sum(isnan(S2), 2);
+S2_beforesort = array2table([num_nans S2]);
+S2_ori_idx = (1:size(S2, 1))';
+idx_table = array2table(S2_ori_idx);
+S2_beforesort = [idx_table S2_beforesort];
+S2_sort_beforecut = sortrows(S2_beforesort, 2);
+S2_sort_cut = S2_sort_beforecut;
+S2_sort_cut(:,2) = [];
+S2_sort= S2_sort_cut{:, 2:end};
+S2_sort(:,end)=[];
+
+ori_S2 =x{missing_samples,:}; %missing'original values
+
+%% 
+[pm.n, pm.d] = size(x_raw);
+label = x_raw(:, pm.d);
+pm.d = pm.d - 1;
+x_raw = x_raw(:, 1:pm.d);
+pm.k = length(unique(label));
+
+pm.unique_values = cell(1, pm.d);
+
+for t = 1:pm.d
+    x_raw_no_nan = x_raw(:, t);
+    if any(isnan(x_raw_no_nan))
+        x_raw_no_nan(isnan(x_raw_no_nan)) = [];
+    end
+    unique_vals = unique(x_raw_no_nan);
+    pm.no_values(t) = length(unique_vals);
+    pm.unique_values{t} = unique_vals; 
+end
+
+
+[dissim, intercost,cpd] = mymetric(x_raw,pm);
+ x_raw = [x_raw,x_raw_label];
+
+%ori data first clust
+no_nom = length(lct_nom);
+no_ord = length(lct_ord);
+no_num = length(lct_num);
+
+[x_raw,idx,center,center_point, D] = pam2(10, k, x_raw,dissim);
+
+[x_filled,x_ori_filled, idx, medoids] = pamImpute5(100, k, dissim,x_raw, S2_sort,S2_sort_beforecut,x_ori,missing_samples,intercost,no_nom,no_ord,no_num,map_nom_inv, map_ord_inv, map_num_inv,pm,cat_cols,num_cols, lct_nom, lct_ord, lct_num);
+ 
+filled_mrmse = mRMSE(ori, x_ori, x_ori_filled, cat_cols);
+
+filled_purity = purity_score(ori_label, idx);
+[~, filled_ARI] = randindex(ori_label, idx);
+filled_cvi = silhouette_index(x_ori_filled, idx,'y',num_cols,cat_cols);
+filled_dbi = DBI(ori ,x_ori_filled, idx,'y',num_cols,cat_cols);
