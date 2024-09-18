@@ -1,0 +1,32 @@
+function mRMSE = mRMSE(ori, x_ori, y_pred, categoricalColumns)
+    % ori: original data
+    % x_ori: missingvalues of original data
+    % y_pred: imputed values
+
+    mRMSE0 = 0;
+    mRMSE1 = 0;
+    [missingRows, missingCols] = find(isnan(x_ori));
+
+    for k = 1:length(missingRows)
+        i = missingRows(k);
+        j = missingCols(k);
+        
+        if ismember(j, categoricalColumns)
+            % mRMSE0
+            M0 = sum(isnan(x_ori(:, j))); 
+            diff = ori(i, j) ~= y_pred(i, j);
+            mRMSE0 = mRMSE0 + sqrt(1/M0 * sum(diff));
+        else
+            % mRMSE1
+            M1 = sum(isnan(x_ori(:, j))); 
+            min_val = min([ori(:, j); y_pred(:, j)]);
+            max_val = max([ori(:, j); y_pred(:, j)]);
+            ori_norm = (ori(i, j) - min_val) / (max_val - min_val);
+            y_pred_norm = (y_pred(i, j) - min_val) / (max_val - min_val); 
+            diff = (ori_norm - y_pred_norm).^2;
+            mRMSE1 = mRMSE1 + sqrt(1/M1 * sum(diff));
+        end
+    end
+    
+    mRMSE = sqrt(mRMSE0^2 + mRMSE1^2);
+end
