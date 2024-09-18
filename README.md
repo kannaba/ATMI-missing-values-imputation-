@@ -1,1 +1,2 @@
 # ATMI-missing-values-imputation-
+This proposes a new missing value imputation method named Any-Type Missing values Inference (ATMI). We first study the connection between heterogeneous attributes, and define a dissimilarity measure for the heterogeneous data with missing values. Then, we present a clustering method for incomplete heterogeneous datasets. Finally, we propose to infer the missing values according to the natural neighbor relationship in the clusters. 
