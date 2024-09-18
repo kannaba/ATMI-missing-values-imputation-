@@ -1,0 +1,25 @@
+function [mae,rmse] = calculateRMSE(original_data, x_ori, filled_data, normalize)
+    min_val = min(original_data(:));
+    max_val = max(original_data(:));
+
+    if normalize == 'y'
+        % 将原始数据和填补数据归一化
+        original_data = (original_data - min_val) / (max_val - min_val);
+        filled_data = (filled_data - min_val) / (max_val - min_val);
+    end
+
+     squared_difference=0;
+    [missing_row, missing_col] = find(isnan(x_ori));
+    for i = 1:length(missing_row)
+        difference = filled_data(missing_row(i), missing_col(i)) - original_data(missing_row(i), missing_col(i));
+        squared_difference = difference .^ 2 + squared_difference;
+    end
+
+    mean_squared_difference = mean(squared_difference(:));
+    rmse = sqrt(mean_squared_difference);
+    rmse = round(rmse, 4);
+    
+    difference = abs(original_data - filled_data);
+    mae = mean(difference(:));
+    mae = round(mae,4);
+end
