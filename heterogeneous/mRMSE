@@ -1,3 +1,16 @@
+%% =========================================================================================
+%% This function calculates the mix Root Mean Square Error (mRMSE) for imputed values in a dataset.
+%% mRMSE evaluates the accuracy of imputation by comparing the imputed values to the original values, considering both categorical and numerical attributes.
+
+%% Inputs-------
+%%     ori: The original dataset with no missing values.
+%%     x_ori: The dataset with missing values.
+%%     y_pred: The dataset after missing values have been imputed.
+%%     categoricalColumns: Indices of categorical attributes.
+%% Outputs-------
+%%     mRMSE: The mean Root Mean Square Error, representing the overall error of the imputed values.
+%% =========================================================================================
+
 function mRMSE = mRMSE(ori, x_ori, y_pred, categoricalColumns)
     % ori: original data
     % x_ori: missingvalues of original data
