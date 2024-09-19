@@ -1,21 +1,21 @@
-% %=======================================================================
-% %silhouette_index for evaluating cluster validity
-% %   cvi = silhouette_index(data, clusters_labels)
-% %
-% % Calculates the SILHOUETTE cluster validity index (cvi):
-% %
-% %      cvi =  mean across data points (b-a)/max(a,b)
-% %
-% %      a is the mean distance from the point to the points in its own cluster
-% %      b is the minimum across foreign clusters of the mean distance from the point to all points in the not-own cluster.
-% %
-% %   Input -----
-% %      'data': imputed data
-% %      'clusters_labels': clustering label
-% %
-% %   Output -----
-% %      'cvi': the silhouette cluster validity index
-% %========================================================================
+%% =======================================================================
+%% This function is calculate silhouette_index for evaluating cluster validity.
+%%   cvi = silhouette_index(data, clusters_labels)
+%%
+%% Calculates the SILHOUETTE cluster validity index (cvi):
+%%
+%%      cvi =  mean across data points (b-a)/max(a,b)
+%%
+%%      a is the mean distance from the point to the points in its own cluster
+%%      b is the minimum across foreign clusters of the mean distance from the point to all points in the not-own cluster.
+%%
+%%   Input -----
+%%      data: imputed data
+%%      clusters_labels: clustering label
+%%
+%%   Output -----
+%%      cvi: the silhouette cluster validity index
+%%========================================================================
 
 function cvi = silhouette_index(data, cluster_labels, normalize, num_indices, cat_indices)
 
