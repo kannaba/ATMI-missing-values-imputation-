@@ -1,0 +1,133 @@
+%% K-Nearest Neighbors based Missing values Imputation
+%% =====================================================================================
+%% The knn_imputation_clustering function performs KNN imputation on a dataset with missing values, followed by k-prototypes clustering and evaluation of the clustering results using various metrics.
+
+%% Inputs:
+%%   x_ori: The dataset with missing values.
+%%   ori: The original dataset with no missing values.
+%%   ori_label: The original labels of the dataset.
+%%   k: The number of clusters.
+%%   gamma: A weighting factor for the categorical distance.
+%%   num_cols: Indices of numerical attributes.
+%%   cat_cols: Indices of categorical attributes.
+%% Outputs:
+%%   knn_filled: The dataset after KNN imputation.
+%%   knn_idx: Cluster indices for each data point after k-prototypes clustering.
+%%   knn_purity: Purity score of the clustering.
+%%   knn_ARI: Adjusted Rand Index of the clustering.
+%%   knn_cvi: Silhouette index of the clustering.
+%%   knn_dbi: Davies-Bouldin Index of the clustering.
+%%   knn_mrmse: Mean Root Mean Square Error of the imputed values.
+
+
+%% =====================================================================================
+
+
+function [knn_filled, knn_idx, knn_purity, knn_ARI, knn_cvi, knn_dbi, knn_mrmse] = knn_imputation_clustering(x_ori, ori, ori_label, k, gamma, num_cols, cat_cols)
+    % Perform KNN Imputation
+    knn_filled = knnImpute(x_ori, num_cols, cat_cols);
+
+    % Perform k-prototypes clustering
+    [knn_idx, ~] = k_prototypes(knn_filled, k, gamma, num_cols, cat_cols);
+
+    % Evaluation Metrics
+    knn_purity = purity_score(ori_label, knn_idx);
+    [~, knn_ARI] = randindex(ori_label, knn_idx);
+    knn_cvi = silhouette_index(knn_filled, knn_idx, 'y', num_cols, cat_cols);
+    knn_dbi = DBI(ori, knn_filled, knn_idx, 'y', num_cols, cat_cols);
+    knn_mrmse = mRMSE(ori, x_ori, knn_filled, cat_cols);
+end
+
+% KNN Imputation Function
+function filledData = knnImpute(data, num_cols, cat_cols)
+    % Calculate minimum and maximum values
+    num_min = min(data(:, num_cols), [], 1);
+    num_max = max(data(:, num_cols), [], 1);
+
+    % Split dataset into complete and missing data
+    completeData = data(~any(isnan(data), 2), :);
+    missingData = data(any(isnan(data), 2), :);
+
+    % Process each sample with missing values
+    missingIndices = find(any(isnan(data), 2));
+    for i = 1:length(missingIndices)
+        sampleIndex = missingIndices(i);
+        sample = data(sampleIndex, :);
+        nanIndices = find(isnan(sample));
+
+        % Dynamically calculate k value
+        nnk = round(sqrt(size(completeData, 1)));
+
+        % Compute distances between the sample and all complete samples
+        distances = computeDistances(sample, completeData, num_cols, cat_cols, num_max, num_min);
+
+        % Find the k nearest samples
+        [~, sortedIndices] = sort(distances);
+        nearestSamples = completeData(sortedIndices(1:nnk), :);
+
+        % Fill missing values using the mean or mode of the k nearest samples
+        for j = nanIndices
+            if ismember(j, num_cols)
+                % For numerical attributes, use mean
+                sample(j) = mean(nearestSamples(:, j), 'omitnan');
+            elseif ismember(j, cat_cols)
+                % For categorical attributes, use mode
+                sample(j) = mode(nearestSamples(:, j));
+            end
+        end
+
+        % Place the filled sample back into the original dataset
+        data(sampleIndex, :) = sample;
+    end
+
+    % Return the filled dataset
+    filledData = data;
+end
+
+% Function to compute distances between a sample and complete data
+function distances = computeDistances(sample, completeData, num_cols, cat_cols, num_max, num_min)
+    numSamples = size(completeData, 1);
+    distances = zeros(numSamples, 1);
+
+    for i = 1:numSamples
+        % Separate numerical and categorical attributes
+        numericalSample = sample(num_cols);
+        categoricalSample = sample(cat_cols);
+        numericalData = completeData(i, num_cols);
+        categoricalData = completeData(i, cat_cols);
+
+        % Handle missing values in numerical attributes
+        validNumIndices = ~isnan(numericalSample);
+        numericalSample = numericalSample(validNumIndices);
+        numericalData = numericalData(validNumIndices);
+        num_min_valid = num_min(validNumIndices);
+        num_max_valid = num_max(validNumIndices);
+
+        % Normalize numerical attributes
+        if ~isempty(numericalSample)
+            numericalSample = (numericalSample - num_min_valid) ./ (num_max_valid - num_min_valid);
+            numericalData = (numericalData - num_min_valid) ./ (num_max_valid - num_min_valid);
+            % Compute Euclidean distance for numerical attributes
+            numericalDistance = norm(numericalSample - numericalData);
+        else
+            numericalDistance = 0;
+        end
+
+        % Handle missing values in categorical attributes
+        validCatIndices = ~isnan(categoricalSample);
+        categoricalSample = categoricalSample(validCatIndices);
+        categoricalData = categoricalData(validCatIndices);
+
+        % Compute matching distance for categorical attributes
+        if ~isempty(categoricalSample)
+            categoricalDistance = sum(categoricalSample ~= categoricalData);
+            % Normalize categorical distance
+            categoricalDistance = categoricalDistance / length(categoricalSample);
+        else
+            categoricalDistance = 0;
+        end
+
+        % Sum the two distances
+        distances(i) = numericalDistance + categoricalDistance;
+    end
+end
