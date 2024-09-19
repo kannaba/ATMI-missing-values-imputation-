@@ -1,5 +1,14 @@
-%%purity
+%% purity
+%% ======================================================================================================================================================
+%% This function calculates the purity of clustering results. Purity is a measure of the extent to which clusters contain a single class. 
+%% It is calculated by summing the number of data points in the most common class in each cluster and then normalizing by the total number of data points.
 
+%%  Inputs----------
+%%        y_true: A vector of true class labels.
+%%        y_pred: A vector of predicted cluster labels.
+%%  Outputs----------
+%%        purity: The purity score, a value between 0 and 1.
+%% ======================================================================================================================================================
 function purity = purity_score(y_true, y_pred)
     % Initialize the purity score
     purity = 0;
