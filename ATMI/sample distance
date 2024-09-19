@@ -1,3 +1,15 @@
+%% ====================================================================================
+%% This function calculates the distance between two samples (x1 and x2) using a given dissimilarity matrix, 
+%% it handles missing values and adjusts the distance calculation accordingly.
+
+%% Inputs:
+%%     x1: The first sample, represented as a vector.
+%%     x2: The second sample, represented as a vector.
+%%     dissim_matrix: A cell array of dissimilarity matrices for each attribute.
+%% Outputs:
+%%     d: The calculated distance between the two samples. If all values are missing, the distance is set to infinity (Inf).
+%% ====================================================================================
+
 function d = sample_distance(x1, x2, dissim_matrix)
     N = length(x1); 
     count = 0; 
