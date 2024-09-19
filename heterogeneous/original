@@ -1,3 +1,8 @@
+%% ================================================
+%% The code performs data preprocessing, clustering, and evaluation for three heterogeneous datasets: TA, DS, and BC.
+%% Then it calculates various clustering metrics such as purity, Adjusted Rand Index (ARI), silhouette index(CVI), and Davies-Bouldin Index (DBI).
+%% ================================================
+
 %% TA
 load TA;
 ori = TA;
@@ -81,10 +86,6 @@ num_cols = 7:9;
 %compute  complete original pure and ARI
 ori_purity = purity_score(ori_label, ori_idx);
 [~, ori_ARI] = randindex(ori_label, ori_idx);
-% ori_nmi = nmi(ori_label, ori_idx);
 ori_cvi = silhouette_index(ori, ori_idx,'y',num_cols,cat_cols);
 ori_dbi = DBI(ori,ori, ori_idx,'y',num_cols,cat_cols);
-ori_ma = NaN;
 ori_mrmse= NaN;
-ori_acc = NaN;
-ori_rmse = NaN;
