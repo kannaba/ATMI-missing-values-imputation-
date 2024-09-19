@@ -1,3 +1,15 @@
+%% ===============================================================
+%% This function calculates the accuracy of imputed values in a dataset by comparing them to the original values.
+
+%% Inputs-----
+%%     ori: The original dataset with no missing values.
+%%     x_ori: The dataset with missing values.
+%%     x_ori_filled: The dataset after missing values have been imputed.
+%% Outputs-----
+%%     accuracy: The accuracy score, representing the proportion of correctly imputed values, rounded to three decimal places.
+%% ===============================================================
+
+
 function accuracy = AccuracyScore(ori, x_ori, x_ori_filled)
     [missing_row, missing_col] = find(isnan(x_ori));
     correct_count = 0;
