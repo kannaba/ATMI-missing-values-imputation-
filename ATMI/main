@@ -1,11 +1,20 @@
+%% ==================================================================================================================
+%% This code performs how ATMI works. 
+%% First, the dataset is preprocessed in the 'preprocess-data' function, 
+%% and then the distance between and within attributes of the processed data set is measured in the' metric 'function.
+%% Then the distance measure is used to complete the initial clustering of the samples through the 'clustering' function. 
+%% Finally, the imputing is done in the 'imputing' function.
+%% It also evaluates the imputed data using various metrics such as mRMSE, purity score, ARI, silhouette index, and DBI.
+%% ==================================================================================================================
+
 x_ori = table2array(x);
 x_ori = x_ori(:,new_order);
 x_ori(:,end) = [];
 [x_raw, map_nom_inv, map_ord_inv, map_num_inv] = preprocess_data(x, lct_nom, lct_ord, lct_num, lct_label);
 x_raw_label = x_raw(:,end);
+
 %create S2 with missing value
 missing_samples = find(any(isnan(x_raw), 2));
-
 S2 = x_raw(missing_samples, :); 
 %% S2 sorted
 num_nans = sum(isnan(S2), 2);
@@ -19,9 +28,8 @@ S2_sort_cut(:,2) = [];
 S2_sort= S2_sort_cut{:, 2:end};
 S2_sort(:,end)=[];
 
-ori_S2 =x{missing_samples,:}; %missing'original values
+ori_S2 =x{missing_samples,:};
 
-%% 
 [pm.n, pm.d] = size(x_raw);
 label = x_raw(:, pm.d);
 pm.d = pm.d - 1;
@@ -44,7 +52,6 @@ end
 [dissim, intercost,cpd] = mymetric(x_raw,pm);
  x_raw = [x_raw,x_raw_label];
 
-%ori data first clust
 no_nom = length(lct_nom);
 no_ord = length(lct_ord);
 no_num = length(lct_num);
@@ -54,7 +61,6 @@ no_num = length(lct_num);
 [x_filled,x_ori_filled, idx, medoids] = imputing(100, k, dissim,x_raw, S2_sort,S2_sort_beforecut,x_ori,missing_samples,intercost,no_nom,no_ord,no_num,map_nom_inv, map_ord_inv, map_num_inv,pm,cat_cols,num_cols, lct_nom, lct_ord, lct_num);
  
 filled_mrmse = mRMSE(ori, x_ori, x_ori_filled, cat_cols);
-
 filled_purity = purity_score(ori_label, idx);
 [~, filled_ARI] = randindex(ori_label, idx);
 filled_cvi = silhouette_index(x_ori_filled, idx,'y',num_cols,cat_cols);
