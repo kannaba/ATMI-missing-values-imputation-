@@ -1,3 +1,19 @@
+%% ================================================================================================
+%% This function performs k-prototypes clustering on a given dataset.
+%% K-prototypes is a clustering algorithm that handles mixed data types (both numerical and categorical) 
+%% by combining k-means and k-modes clustering techniques.
+
+%% Inputs------
+%%     X: The dataset to be clustered, where each row represents a data point and each column represents an attribute.
+%%     K: The number of clusters.
+%%     gamma: A weighting factor for the categorical distance.
+%%     num_cols: Indices of numerical attributes.
+%%     cat_cols: Indices of categorical attributes.
+%% Outputs------
+%%     cluster_labels: A vector of cluster indices for each data point.
+%%     centroids: The centroids (prototypes) of the clusters.
+%% ================================================================================================
+
 function [cluster_labels, centroids] = k_prototypes(X, K, gamma, num_cols, cat_cols)
     % X: data
     % K: cluster numbers
