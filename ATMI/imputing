@@ -58,7 +58,7 @@ while ~isempty(queue)
                     end
                     attribute_values = final_call(:, max_dependent);
                     [S2_sort, x_filled, x_ori_filled,sample] = imputeValues2(s,final_call,original_idx,map_nom_inv,map_ord_inv,map_num_inv,S2_sort, x_filled, x_ori_filled, sample, max_dependent, no_nom, no_ord, attribute_values, new_pm);
-                    [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);
+                    [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = repreprocess_data(x_ori_filled, no_nom, no_ord, no_num,new_pm);
                     x_raw = [x_filled,idx];
                     [x_raw, idx, center,center_point, D] = clustering(10, k, x_raw, dissim);
                     nan_indices = isnan(sample);
@@ -109,7 +109,7 @@ while ~isempty(queue)
                 end
                 attribute_values = final_call(:, max_dependent);
                 [x_ori_filled] = imputeValues2(s,final_call,original_idx,map_nom_inv,map_ord_inv,map_num_inv,S2_sort, x_filled, x_ori_filled, sample, max_dependent, no_nom, no_ord, attribute_values, new_pm);
-                [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);           
+                [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = repreprocess_data(x_ori_filled, no_nom, no_ord, no_num,new_pm);           
             end
 
             attribute_values = final_call(:, max_dependent);
@@ -119,7 +119,7 @@ while ~isempty(queue)
         end
 
         if any(nan_indices==1)     
-            [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);
+            [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = repreprocess_data(x_ori_filled, no_nom, no_ord, no_num,new_pm);
             [dissim, intercost,cpd] = mymetric(x_filled,new_pm);
             x_raw=[x_filled,idx];
             x_raw = knearest_fill(x_raw,dissim,num_cols,cat_cols);
@@ -132,7 +132,7 @@ while ~isempty(queue)
             cluster_members = x_filled(cluster_members_indices, :);
         else
             flag(s) = 0;
-            [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);
+            [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = repreprocess_data(x_ori_filled, no_nom, no_ord, no_num,new_pm);
             [dissim, intercost,cpd] = mymetric(x_filled,new_pm);
             x_raw = [x_filled,idx];
             [x_raw,idx,center,center_point, D] = clustering(n, k, x_raw,dissim);
