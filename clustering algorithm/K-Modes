@@ -1,4 +1,16 @@
-%%
+%% ===================================================================================
+%% Thisfunction performs k-modes clustering on a given dataset. 
+%% K-modes is a clustering algorithm similar to k-means but designed for categorical data. 
+%% It partitions the dataset into k clusters by minimizing the dissimilarity between data points and the cluster modes.
+
+%% Inputs-----
+%%     X: The dataset to be clustered, where each row represents a data point and each column represents an attribute.
+%%     k: The number of clusters.
+%% Outputs-----
+%%     idx: A vector of cluster indices for each data point.
+%%     modes: The modes (centroids) of the clusters.
+%% ===================================================================================
+
 function [idx, modes] = k_modes(X, k )
     if k > size(X, 1)
         error('k should not be greater than the number of rows in X');
