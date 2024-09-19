@@ -1,5 +1,6 @@
 %% =========================================================================================
-%% The clustering function performs clustering on a given dataset using a custom distance metric. It iteratively updates cluster centers to minimize the clustering cost, considering both numerical and categorical data.
+%% This function performs clustering on a given dataset using 'metric'.
+%% It iteratively updates cluster centers to minimize the clustering cost, considering both numerical and categorical data.
 
 %% Inputs-----
 %%    n: The number of iterations for updating cluster centers.
