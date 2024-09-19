@@ -1,3 +1,20 @@
+%% ================================================================================================
+%% The preprocess_data function preprocesses a dataset by encoding nominal, ordinal, and numerical attributes into numerical values.
+%% It creates inverse mappings for each attribute type to facilitate the conversion back to the original values.
+
+%% Inputs---------
+%%     x_raw: The given dataset.
+%%     lct_nom: Indices of nominal attributes.
+%%     lct_ord: Indices of ordinal attributes.
+%%     lct_num: Indices of numerical attributes.
+%%     lct_label: Index of the label column.
+%% Outputs---------
+%%     x_raw: The preprocessed dataset with encoded values.
+%%     map_nom_inv: Inverse mappings for nominal attributes.
+%%     map_ord_inv: Inverse mappings for ordinal attributes.
+%%     map_num_inv: Inverse mappings for numerical attributes.
+%% ================================================================================================
+
 function [x_raw, map_nom_inv, map_ord_inv, map_num_inv] = preprocess_data(x_raw, lct_nom, lct_ord, lct_num, lct_label)
     [n, d] = size(x_raw);
 
