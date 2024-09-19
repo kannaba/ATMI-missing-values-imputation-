@@ -1,0 +1,123 @@
+%% K-Means Clustering-based Missing values Imputation
+%% =============================================================================================
+%% The PBKmeans_imputation_clustering function performs parameter-based K-means imputation on a dataset with missing values, followed by K-means clustering and evaluation of the clustering results using various metrics.
+
+%% Inputs--------------
+%%   x_ori: The dataset with missing values.
+%%   ori: The original dataset with no missing values.
+%%   ori_label: The original labels of the dataset.
+%%   k: The number of clusters.
+%%   cat_cols: Indices of categorical attributes.
+%%   num_cols: Indices of numerical attributes.
+%% Outputs--------------
+%%   PBKmean_filled: The dataset after parameter-based K-means imputation.
+%%   PBK_idx: Cluster indices for each data point after K-means clustering.
+%%   PBK_purity: Purity score of the clustering.
+%%   PBK_ARI: Adjusted Rand Index of the clustering.
+%%   PBK_cvi: Silhouette index of the clustering.
+%%   PBK_dbi: Davies-Bouldin Index of the clustering.
+%%   PBK_rmse: Root Mean Square Error of the imputed values.
+
+%% =============================================================================================
+function [PBKmean_filled, PBK_idx, PBK_purity, PBK_ARI, PBK_cvi, PBK_dbi, PBK_mae, PBK_rmse] = PBKmeans_imputation_clustering(x_ori, ori, ori_label, k, cat_cols, num_cols)
+    % Perform Parameter-Based K-Means Imputation
+    PBKmean_filled = PBK_impute(x_ori, cat_cols, num_cols);
+
+    if isnan(PBKmean_filled)
+        PBK_purity = NaN;
+        PBK_ARI = NaN;
+        PBK_cvi = NaN;
+        PBK_dbi = NaN;
+        PBK_mae = NaN;
+        PBK_rmse = NaN;
+    else
+        % K-Means Clustering
+        [PBK_idx, ~] = kmeans(PBKmean_filled, k);
+
+        % Evaluation Metrics
+        PBK_purity = purity_score(ori_label, PBK_idx);
+        [~, PBK_ARI] = randindex(ori_label, PBK_idx);
+        PBK_cvi = silhouette_index(PBKmean_filled, PBK_idx, 'y', cat_cols, num_cols);
+        PBK_dbi = DBI(ori, PBKmean_filled, PBK_idx, 'y', cat_cols, num_cols);
+        [~, PBK_rmse] = calculateRMSE(ori, x_ori, PBKmean_filled,'y');
+    end
+end
+
+% Function to update centroids by taking the mean of samples within each cluster
+function centroids = computeCentroids(X, idx, K)
+    [m, n] = size(X);
+    centroids = zeros(K, n);
+    count = zeros(K, 1);
+
+    for i = 1:m
+        k = idx(i);
+        centroids(k, :) = centroids(k, :) + X(i, :);
+        count(k) = count(k) + 1;
+    end
+
+    centroids = centroids ./ count;
+end
+
+% Parameter-based K-means imputation (fill missing values with the complete samples within the cluster)
+function filledData = PBK_impute(data, cat_cols, num_cols)
+    completeData = data(~any(isnan(data), 2), :);
+    missingData = data(any(isnan(data), 2), :);
+    pk = 3;
+
+    if isnan(completeData)
+        filledData = NaN;
+        return;
+    end
+
+    if isnan(pk)
+        filledData = NaN;
+        return;
+    end
+
+    [idx, centroids] = kmeans(completeData, pk);
+
+    missingIndices = find(any(isnan(data), 2));
+    for i = 1:size(missingData, 1)
+        sample = missingData(i, :);
+        nanIndices = isnan(sample);
+
+        distances = computeDistances(sample, centroids);
+        [~, minIdx] = min(distances);
+        sample = fillMissingValues(sample, completeData(idx == minIdx, :));
+        data(missingIndices(i), :) = sample;
+        completeData = [completeData; sample];
+        idx = [idx; minIdx];
+        centroids = computeCentroids(completeData, idx, pk);
+    end
+    filledData = data;
+end
+
+% Function to compute distances between a given sample and complete data
+function distances = computeDistances(sample, completeData)
+    nonMissingIndices = ~isnan(sample);
+
+    sample = sample(nonMissingIndices);
+    completeData = completeData(:, nonMissingIndices);
+
+    numSamples = size(completeData, 1);
+    distances = zeros(numSamples, 1);
+
+    for i = 1:numSamples
+        distances(i) = norm(sample - completeData(i, :));
+    end
+end
+
+% Function to fill missing values in a sample using complete samples within the cluster
+function filledSample = fillMissingValues(sample, clusterData)
+    nanIndices = isnan(sample);
+    
+    distances = computeDistances(sample, clusterData);
+    
+    mnk = sqrt(size(clusterData, 1));
+    
+    [~, sortedIndices] = sort(distances);
+    nearestSamples = clusterData(sortedIndices(1:round(mnk)), :);
+    sample(nanIndices) = mean(nearestSamples(:, nanIndices));    
+    filledSample = sample;
+end
+
