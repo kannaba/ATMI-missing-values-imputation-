@@ -1,0 +1,24 @@
+%%purity
+
+function purity = purity_score(y_true, y_pred)
+    % Initialize the purity score
+    purity = 0;
+    % Get the unique clusters
+    clusters = unique(y_pred);
+  
+    % Loop over each cluster
+    for i = 1:length(clusters)
+        % Get the indices of the current cluster
+        idx = find(y_pred == clusters(i));
+        % Get the true labels of the current cluster
+        cluster_labels = y_true(idx);
+        % Count the number of each label in the current cluster
+        label_counts = histc(cluster_labels,  unique(y_true));
+        % Add the count of the most common label to the purity score
+        purity = purity + max(label_counts);
+    end
+    % Normalize the purity score by the total number of samples
+    purity = purity / length(y_true);
+    purity = round(purity, 3);
+
+end
