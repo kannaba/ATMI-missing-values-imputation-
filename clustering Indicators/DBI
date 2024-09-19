@@ -1,0 +1,47 @@
+function DBI = DBI(original_data, filled_data, idx, normalize, num_indices, cat_indices)
+    if strcmp(normalize, 'y') && ~isempty(num_indices)
+        min_val = min([original_data(:, num_indices); filled_data(:, num_indices)], [], 1);
+        max_val = max([original_data(:, num_indices); filled_data(:, num_indices)], [], 1);
+        original_data(:, num_indices) = (original_data(:, num_indices) - min_val) ./ (max_val - min_val);
+        filled_data(:, num_indices) = (filled_data(:, num_indices) - min_val) ./ (max_val - min_val);
+    end
+
+    K = max(idx);
+    centers = zeros(K, size(filled_data, 2));
+    for k = 1:K
+        centers(k, num_indices) = mean(filled_data(idx == k, num_indices), 'omitnan');
+        for c = cat_indices
+            valid_data = filled_data(idx == k, c);
+            valid_data = valid_data(~isnan(valid_data));  % 忽略 NaN 值
+            if ~isempty(valid_data)
+                centers(k, c) = mode(valid_data);
+            end
+        end
+    end
+
+    avg_dists = zeros(K, 1);
+    for k = 1:K
+        num_dists = sqrt(sum((filled_data(idx == k, num_indices) - centers(k, num_indices)) .^ 2, 2));
+        cat_dists = sum(filled_data(idx == k, cat_indices) ~= centers(k, cat_indices), 2);
+        avg_dists(k) = mean(num_dists + cat_dists);
+    end
+
+    DBI = 0;
+    for k = 1:K
+        max_ratio = 0;
+        for l = 1:K
+            if k ~= l
+                num_dist = sqrt(sum((centers(k, num_indices) - centers(l, num_indices)) .^ 2));
+                cat_dist = sum(centers(k, cat_indices) ~= centers(l, cat_indices));
+                dist = num_dist + cat_dist;
+                ratio = (avg_dists(k) + avg_dists(l)) / dist;
+                if ratio > max_ratio
+                    max_ratio = ratio;
+                end
+            end
+        end
+        DBI = DBI + max_ratio;
+    end
+    DBI = DBI / K;
+    DBI = round(DBI,3);
+end
