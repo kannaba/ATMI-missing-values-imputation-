@@ -1,3 +1,4 @@
+%% CVI
 %% =======================================================================
 %% This function is calculate silhouette_index for evaluating cluster validity.
 %%   cvi = silhouette_index(data, clusters_labels)
