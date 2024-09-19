@@ -1,3 +1,17 @@
+%% ======================================================================================
+%% This function calculates the dissimilarity matrix, interdependence cost matrix, and conditional probability distributions for a given dataset. 
+%% These metrics are used to evaluate the relationships between attributes and to compute the dissimilarity between samples.
+
+%% Inputs----------
+%%     x: The dataset.
+%%     pm: A structure containing parameters such as the number of attributes (pm.d), unique values for each attribute (pm.unique_values), 
+%%         and the number of nominal attributes (pm.no_nom_att).
+%% Outputs----------
+%%     dissim_matrix: A cell array of dissimilarity matrices for each attribute.
+%%     inter_cost_matrix: A matrix representing the interdependence costs between attributes.
+%%     cpd: A cell array of conditional probability distributions for each attribute.
+%% ======================================================================================
+
 function [dissim_matrix,inter_cost_matrix,cpd] = mymetric( x , pm )
 
 % initialize the dissimilarity matrices of each attribute
