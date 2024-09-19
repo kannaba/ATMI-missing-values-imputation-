@@ -1,0 +1,145 @@
+%%
+function [x_filled,x_ori_filled, idx, center] = imputing(n, k, dissim,x_raw, S2_sort,S2_sort_beforecut,x_ori,missing_samples,intercost,no_nom,no_ord,no_num,map_nom_inv, map_ord_inv, map_num_inv,pm,cat_cols,num_cols, lct_nom, lct_ord, lct_num)
+x_filled = x_raw;
+x_ori_filled = x_ori;
+new_pm = pm;
+att_cols = size(x_raw,2)-1;
+
+queue = 1:size(S2_sort,1);
+x_raw = [x_raw,x_filled(:,end)];
+[x_raw,idx,center,center_point, D] = clustering(n, k, x_raw,dissim);
+x_filled(:,end)=[];
+
+flag = zeros(size(x_filled,1),1);
+while ~isempty(queue)
+
+    %从队头开始处理
+    s = queue(1);
+    queue(1) =[];
+
+    sample = S2_sort(s, :);
+    disp(sample);
+    S2_ori_idx = table2array(S2_sort_beforecut(s,1));
+    original_idx = missing_samples(S2_ori_idx);
+
+    nan_indices = isnan(sample);
+    while any(nan_indices)
+
+        missing_indices = find(nan_indices);
+        [~, max_dependent] = max(sum(intercost(missing_indices, ~nan_indices),2));
+        max_dependent = missing_indices(max_dependent);
+
+        cluster_idx = idx(original_idx);
+        cluster_members_indices = find(idx ==cluster_idx);
+        cluster_members_indices(cluster_members_indices == original_idx) = [];
+        cluster_members = x_filled(cluster_members_indices, :);
+
+        if isempty(cluster_members)
+            [x_raw,idx,center,center_point, D] = clustering(n, k, x_raw,dissim);
+            cluster_idx = idx(original_idx);
+            cluster_members_indices = find(idx == cluster_idx);
+
+            cluster_members_indices(cluster_members_indices == original_idx) = [];
+            cluster_members = x_filled(cluster_members_indices, :);
+
+            if isempty(cluster_members)
+                flag(s) = flag(s)+1;
+                if flag(s) <2
+                    queue = [queue,s];
+                    break;
+                else
+                    available_clusters = setdiff(1:k, cluster_idx);
+                    all_other_clusters_indices = find(ismember(idx, available_clusters));
+                    all_other_clusters_members = x_filled(all_other_clusters_indices, :);
+                    final_call = all_other_clusters_members;
+                    missing_indices = find(isnan(final_call(:, max_dependent)));
+                    if ~isempty(missing_indices)
+                        final_call(missing_indices, :) = [];
+                    end
+                    attribute_values = final_call(:, max_dependent);
+                    [S2_sort, x_filled, x_ori_filled,sample] = imputeValues2(s,final_call,original_idx,map_nom_inv,map_ord_inv,map_num_inv,S2_sort, x_filled, x_ori_filled, sample, max_dependent, no_nom, no_ord, attribute_values, new_pm);
+                    [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);
+                    x_raw = [x_filled,idx];
+                    [x_raw, idx, center,center_point, D] = clustering(10, k, x_raw, dissim);
+                    nan_indices = isnan(sample);
+                    continue;
+                end
+            end
+        else
+
+            candidate = cluster_members;
+            candidate_nan_indices = find(isnan(candidate(:, max_dependent)));
+            if ~isempty(candidate_nan_indices)
+                cluster_members_indices(candidate_nan_indices) = [];
+                candidate(candidate_nan_indices, :) = [];
+            end
+
+            if isempty(candidate)
+                available_clusters = setdiff(1:k, cluster_idx);
+                random_cluster_idx = available_clusters(randi(length(available_clusters)));
+                random_cluster_members_indices = find(idx == random_cluster_idx);
+                random_cluster_members = x_filled(random_cluster_members_indices, :);
+                candidate = random_cluster_members;
+                nan_indices = find(isnan(candidate(:, max_dependent)));
+                if ~isempty(nan_indices)
+                    random_cluster_members_indices(nan_indices) = [];
+                    candidate(nan_indices, :) = [];
+                end
+                candidate = [candidate;sample];
+                random_cluster_members_indices = [random_cluster_members_indices;original_idx];
+                myNaN = MyNaN(candidate,sample,random_cluster_members_indices, D);
+                final_call = x_filled(myNaN,:);
+
+            else
+                candidate = [candidate;sample];
+                cluster_members_indices = [cluster_members_indices;original_idx];
+                myNaN = MyNaN(candidate,sample,cluster_members_indices, D);
+                final_call = x_filled(myNaN,:);
+            end
+
+            if isempty(final_call)
+                available_clusters = setdiff(1:k, cluster_idx);
+                random_cluster_idx = available_clusters(randi(length(available_clusters)));
+                random_cluster_members_indices = find(idx == random_cluster_idx);
+                random_cluster_members = x_filled(random_cluster_members_indices, :);
+                final_call = random_cluster_members;
+
+                if ~isempty(nan_indices)
+                    final_call(nan_indices, :) = [];
+                end
+                attribute_values = final_call(:, max_dependent);
+                [x_ori_filled] = imputeValues2(s,final_call,original_idx,map_nom_inv,map_ord_inv,map_num_inv,S2_sort, x_filled, x_ori_filled, sample, max_dependent, no_nom, no_ord, attribute_values, new_pm);
+                [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);           
+            end
+
+            attribute_values = final_call(:, max_dependent);
+
+            [x_ori_filled] = imputeValues2(s,final_call,original_idx,map_nom_inv,map_ord_inv,map_num_inv,S2_sort, x_filled, x_ori_filled, sample, max_dependent, no_nom, no_ord, attribute_values, new_pm);
+            nan_indices(max_dependent) = 0;
+        end
+
+        if any(nan_indices==1)     
+            [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);
+            [dissim, intercost,cpd] = mymetric(x_filled,new_pm);
+            x_raw=[x_filled,idx];
+            x_raw = knearest_fill(x_raw,dissim,num_cols,cat_cols);
+            x_raw=[x_raw,idx];
+            [x_raw, idx, center,center_point, D] = clustering(10, k, x_raw, dissim);
+            new_cluster_idx = idx(original_idx);
+
+            cluster_members_indices = find(idx == new_cluster_idx);
+            cluster_members_indices(cluster_members_indices == original_idx) = [];
+            cluster_members = x_filled(cluster_members_indices, :);
+        else
+            flag(s) = 0;
+            [x_filled, map_nom_inv, map_ord_inv, map_num_inv,new_pm] = preprocess_data3(x_ori_filled, no_nom, no_ord, no_num,new_pm);
+            [dissim, intercost,cpd] = mymetric(x_filled,new_pm);
+            x_raw = [x_filled,idx];
+            [x_raw,idx,center,center_point, D] = clustering(n, k, x_raw,dissim);
+            break;
+        end
+    end
+
+end
+end
+
