@@ -1,0 +1,88 @@
+% %=======================================================================
+% %silhouette_index for evaluating cluster validity
+% %   cvi = silhouette_index(data, clusters_labels)
+% %
+% % Calculates the SILHOUETTE cluster validity index (cvi):
+% %
+% %      cvi =  mean across data points (b-a)/max(a,b)
+% %
+% %      a is the mean distance from the point to the points in its own cluster
+% %      b is the minimum across foreign clusters of the mean distance from the point to all points in the not-own cluster.
+% %
+% %   Input -----
+% %      'data': imputed data
+% %      'clusters_labels': clustering label
+% %
+% %   Output -----
+% %      'cvi': the silhouette cluster validity index
+% %========================================================================
+
+function cvi = silhouette_index(data, cluster_labels, normalize, num_indices, cat_indices)
+
+    if strcmp(normalize, 'y') && ~isempty(num_indices)
+        min_val = min(data(:, num_indices), [], 1);
+        max_val = max(data(:, num_indices), [], 1);
+
+        data(:, num_indices) = (data(:, num_indices) - min_val) ./ (max_val - min_val);
+    end
+    
+    uc = unique(cluster_labels);
+    K = numel(uc);
+    if K == 1 % one cluster only
+        cvi = -1;
+        return
+    end
+    % precompute the distance matrix
+    d = mixed_distance(data, data, num_indices, cat_indices);
+    cvia = zeros(size(cluster_labels)); % array to store a's
+
+    cvib = zeros(size(cluster_labels)); % array to store b's
+    for i = 1:K
+        this_cluster = cluster_labels == uc(i);
+        nk = sum(this_cluster);
+        if nk > 1 % guard against one-element cluster
+            cvia(this_cluster) = mean(d(this_cluster,this_cluster),2) ...
+                * nk / (nk-1); % correction for self
+            bb = [];
+            for j = 1:K
+                if i ~= j % other cluster
+                    other_cluster = cluster_labels == uc(j);
+                    bb = [bb mean(d(this_cluster,other_cluster),2)];
+                    % no need for correction for self
+                end
+            end
+            cvib(this_cluster) = min(bb,[],2);
+        else
+            cvia(this_cluster) = 1;
+            cvib(this_cluster) = 1;
+        end
+    end
+    cvi = mean((cvib - cvia)./max([cvia,cvib],[],2));
+    cvi = round(cvi , 3);
+    %cvi = num2str(cvi, '%07.4f');
+
+end
+
+function d = mixed_distance(x, y, num_indices, cat_indices)
+    n = size(x, 1);
+    m = size(y, 1);
+    d = zeros(n, m);
+    for i = 1:n
+        for j = 1:m
+            num_d = 0;
+            cat_d = 0;
+            if ~isempty(num_indices)
+                num_v = x(i, num_indices) - y(j, num_indices);
+                num_v = num_v(~isnan(num_v));
+                num_d = sqrt(sum(num_v .^ 2));
+            end
+            if ~isempty(cat_indices)
+                cat_v = x(i, cat_indices) ~= y(j, cat_indices);
+                cat_v = cat_v(~isnan(cat_v));
+                cat_d = sum(cat_v);
+            end
+            d(i, j) = num_d + cat_d;
+        end
+    end
+end
+
