@@ -1,4 +1,30 @@
-%%
+%% ======================================================================================
+%% The imputing function performs missing data imputation using clustering and nearest neighbor techniques. 
+%% It iteratively fills in missing values by natural neighbors.
+
+%% Inputs-----
+%%     n: The number of iterations for updating cluster centers.
+%%     k: The number of clusters.
+%%     dissim: The dissimilarity measure used for calculating distances between samples.
+%%     x_raw: The dataset with missing values.
+%%     S2_sort: The set of incomplete samples of pairs arranged from less to more according to the number of missing values
+%%     S2_sort_beforecut: The original S2 set before any modifications.
+%%     x_ori: The original dataset with missing values.
+%%     missing_samples: Indices of samples with missing values.
+%%     intercost: The intercost matrix representing dependencies between attributes.
+%%     no_nom, no_ord, no_num: Number of nominal, ordinal, and numerical attributes, respectively.
+%%     map_nom_inv, map_ord_inv, map_num_inv: Inverse mappings for nominal, ordinal, and numerical attributes.
+%%     pm: The dataset parameter matrix.
+%%     cat_cols, num_cols: Indices of categorical and numerical columns.
+%%     lct_nom, lct_ord, lct_num: Location indices for nominal, ordinal, and numerical attributes.
+%% Outputs-----
+%%     x_filled: The dataset with imputed values.
+%%     x_ori_filled: The original dataset with imputed values.
+%%     idx: A vector of cluster indices for each data point.
+%%     center: The final cluster centers.
+%% ======================================================================================
+
+
 function [x_filled,x_ori_filled, idx, center] = imputing(n, k, dissim,x_raw, S2_sort,S2_sort_beforecut,x_ori,missing_samples,intercost,no_nom,no_ord,no_num,map_nom_inv, map_ord_inv, map_num_inv,pm,cat_cols,num_cols, lct_nom, lct_ord, lct_num)
 x_filled = x_raw;
 x_ori_filled = x_ori;
