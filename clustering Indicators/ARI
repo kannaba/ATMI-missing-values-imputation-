@@ -1,4 +1,16 @@
-%%ARI
+%% ARI
+%% ===================================================================================================================
+%% This function calculates the Rand Index (RI) and Adjusted Rand Index (ARI) between two label assignments. 
+%% These indices are used to measure the similarity between two clustering results.
+
+%% Inputs------------------------
+%%     labels1: original data labels.
+%%     labels2: imputed data labels
+%% Outputs------------------------
+%%     RI: The Rand Index, a measure of the similarity between two data clusterings.
+%%     ARI: The Adjusted Rand Index, a corrected-for-chance version of the Rand Index.
+%% ===================================================================================================================
+
 function [RI, ARI] = randindex(labels1, labels2)
     % The function calculates the Rand index (RI) and Adjusted Rand index (ARI)
     % between two label assignments: labels1 and labels2.
