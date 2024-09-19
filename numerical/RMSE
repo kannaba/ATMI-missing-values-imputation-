@@ -1,3 +1,16 @@
+%% =====================================================================================================
+%% This function calculates two error metrics, Mean Absolute Error (MAE) and Root Mean Square Error (RMSE), for imputed values in a dataset. These metrics evaluate the accuracy of imputation by comparing the imputed values to the original values, with an option to normalize the data.
+
+%% Inputs-----
+%%     original_data: The original dataset with no missing values.
+%%     x_ori: The dataset with missing values.
+%%     filled_data: The dataset after missing values have been imputed.
+%%     normalize: A flag (‘y’ or ‘n’) indicating whether to normalize the numerical data.
+%% Outputs-----
+%%     mae: The Mean Absolute Error, representing the average absolute difference between the original and imputed values.
+%%     rmse: The Root Mean Square Error, representing the square root of the average squared difference between the original and imputed values.
+%% =====================================================================================================
+
 function [mae,rmse] = calculateRMSE(original_data, x_ori, filled_data, normalize)
     min_val = min(original_data(:));
     max_val = max(original_data(:));
