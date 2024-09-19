@@ -1,0 +1,107 @@
+function [myNaN] = MyNaN(candidate,sample,cluster_members_indices, D)
+minK = 2;
+
+num_samples = size(candidate, 1);
+maxK = num_samples-1;
+distances = zeros(num_samples, num_samples);
+
+for i = 1:num_samples
+    for j = i+1:num_samples
+        distances(i, j) = D(cluster_members_indices(i),cluster_members_indices(j));
+        distances(j, i) = distances(i, j);  
+    end
+end
+
+num_distance = size(distances, 1);
+sorted_distances = zeros(num_distance, num_distance);
+sorted_indices = zeros(num_distance, num_distance);
+
+for i = 1:num_samples
+    distances_i = distances(i, :);
+    [sorted_row, sorted_row_indices] = sort(distances_i, 'ascend');
+    self_idx = find(sorted_row_indices == i);
+    sorted_row_indices(self_idx:-1:2) = sorted_row_indices(self_idx-1:-1:1);
+    sorted_row_indices(1) = i; 
+    sorted_distances(i, :) = sorted_row;
+    sorted_indices(i, :) = sorted_row_indices;
+end
+
+NaNeighbor_map = zeros(num_samples, num_samples);
+NaN_distance = zeros(num_samples, num_samples);
+
+
+K = minK;
+for i = 1:num_samples
+    i_knn = sorted_indices(i, 1:K);
+    for j = 2:K
+        i_jnn = i_knn(j);
+        j_knn = sorted_indices(i_jnn, 1:K);
+        if ismember(i, j_knn)
+            NaNeighbor_map(i, i_jnn) = 1;
+            NaNeighbor_map(i_jnn, i) = 1;
+            NaN_distance(i, i_jnn) = sorted_distances(i, j);
+            NaN_distance(i_jnn, i) = sorted_distances(i, j);
+        end
+    end
+end
+
+zero_num = sum(sum(NaNeighbor_map, 2) == 0);
+
+if zero_num == 0
+    sample_NaN_neighbors = find(NaNeighbor_map(end, :) == 1);
+    sample_NaN_neighbors = cluster_members_indices(sample_NaN_neighbors);
+    myNaN = sample_NaN_neighbors;
+    return;
+end
+
+Flag = true;
+
+count_old = zero_num;
+repeat_time = 0;
+while Flag
+    if K >= maxK
+        Flag = false;
+        break;
+    end
+    next_K = K + 1;
+    for i = 1:num_samples
+        i_k_n = sorted_indices(i, next_K);
+        i_k_n_knn = sorted_indices(i_k_n, 1:next_K);
+        if ismember(i, i_k_n_knn)
+            NaNeighbor_map(i, i_k_n) = 1;
+            NaNeighbor_map(i_k_n, i) = 1;
+            NaN_distance(i, i_k_n) = sorted_distances(i, next_K);
+            NaN_distance(i_k_n, i) = sorted_distances(i, next_K);
+        end      
+    end
+
+    zero_num = sum(sum(NaNeighbor_map, 2) == 0);
+    if zero_num == 0 
+        Flag = false;
+        break;
+    else
+        if zero_num == count_old
+            repeat_time = repeat_time + 1;
+            if repeat_time == 3
+                Flag = false;
+                break;
+            end
+        else
+            repeat_time = 0;
+            count_old = zero_num;
+            K = next_K;
+        end
+    end
+end
+
+sample_NaN_neighbors = find(NaNeighbor_map(end, :) == 1);
+sample_NaN_neighbors = cluster_members_indices(sample_NaN_neighbors);
+myNaN = sample_NaN_neighbors;
+if isempty(myNaN)
+    sample_NaN_neighbors = sorted_indices(end, 2);
+    sample_NaN_neighbors = cluster_members_indices(sample_NaN_neighbors);
+    myNaN = sample_NaN_neighbors;
+end
+end
+
+
