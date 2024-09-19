@@ -1,5 +1,6 @@
 %% =====================================================================================================
-%% This function calculates two error metrics, Mean Absolute Error (MAE) and Root Mean Square Error (RMSE), for imputed values in a dataset. These metrics evaluate the accuracy of imputation by comparing the imputed values to the original values, with an option to normalize the data.
+%% This function calculates two error metrics, Mean Absolute Error (MAE) and Root Mean Square Error (RMSE), for imputed values in a dataset.
+%% These metrics evaluate the accuracy of imputation by comparing the imputed values to the original values.
 
 %% Inputs-----
 %%     original_data: The original dataset with no missing values.
