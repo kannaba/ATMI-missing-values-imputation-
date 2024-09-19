@@ -1,0 +1,134 @@
+%% MissForest(MF) imputation method
+%% =====================================================================================================
+%% The missForest_imputation_clustering function performs MissForest imputation on a dataset with missing values, followed by k-prototypes clustering and evaluation of the clustering results using various metrics.
+
+%% Inputs--------------
+%%   x: The dataset with missing values.
+%%   ori: The original dataset with no missing values.
+%%   ori_label: The original labels of the dataset.
+%%   k: The number of clusters.
+%%   gamma: A weighting factor for the categorical distance.
+%%   num_cols: Indices of numerical attributes.
+%%   cat_cols: Indices of categorical attributes.
+%%   new_order: The new order of columns after reordering.
+%% Outputs--------------
+%%   forest_filled: The dataset after MissForest imputation.
+%%   forest_idx: Cluster indices for each data point after k-prototypes clustering.
+%%   forest_purity: Purity score of the clustering.
+%%   forest_ARI: Adjusted Rand Index of the clustering.
+%%   forest_cvi: Silhouette index of the clustering.
+%%   forest_dbi: Davies-Bouldin Index of the clustering.
+%%   forest_mrmse: Mean Root Mean Square Error of the imputed values.
+
+%% =====================================================================================================
+function [forest_filled, forest_idx, forest_purity, forest_ARI, forest_cvi, forest_dbi, forest_mrmse] = missForest_imputation_clustering(x, ori, ori_label, k, gamma, num_cols, cat_cols, new_order)
+
+    % Reorder and remove label column
+    forest_filled = x;
+    forest_filled = forest_filled(:, new_order);
+    forest_filled(:, end) = [];
+
+    % Perform MissForest Imputation
+    forest_filled = fillMissingWithMissForest(forest_filled, num_cols, cat_cols);
+    forest_filled = table2array(forest_filled);
+
+    % Perform k-prototypes clustering
+    [forest_idx, ~] = k_prototypes(forest_filled, k, gamma, num_cols, cat_cols);
+
+    % Evaluation Metrics
+    forest_purity = purity_score(ori_label, forest_idx);
+    [~, forest_ARI] = randindex(ori_label, forest_idx);
+    forest_cvi = silhouette_index(forest_filled, forest_idx, 'y', num_cols, cat_cols);
+    forest_dbi = DBI(ori, forest_filled, forest_idx, 'y', num_cols, cat_cols);
+    forest_mrmse = mRMSE(ori, x, forest_filled, cat_cols);
+end
+
+% MissForest Imputation Function
+function X_imputed = fillMissingWithMissForest(X, index_numeric, index_text)
+    diff_old = 10^15;
+    diff_new = 10^12;
+
+    X_initialguess = fillmissing(X, 'nearest');
+
+    missing1 = ismissing(X);
+    m = zeros(1, size(X, 2));
+    indexMissing = {};
+    indexObserved = {};
+    for i = 1:size(X, 2)
+        indexMissing{i} = find(missing1(:, i) == 1);
+        indexObserved{i} = find(missing1(:, i) == 0);
+        m(i) = length(find(missing1(:, i) == 1));
+    end
+
+    m1 = m';
+    index1 = 1:size(X, 2);
+    t = table(index1', m1);
+    t_sorted = sortrows(t, 'm1');
+    k = t_sorted{:, 1};
+
+    iteration = 1;
+    Delta_F = {};
+    while diff_new < diff_old
+        diff_old = diff_new;
+
+        X_oldimp = X_initialguess;
+        X_old = X_initialguess;
+
+        for i = 1:length(k)
+            s = k(i);
+            if m1(s) ~= 0
+                y_obs = X_old(indexObserved{s}, s);
+
+                x_obs = X_old(indexObserved{s}, :);
+                x_obs(:, s) = [];
+
+                y_misold = X_old(indexMissing{s}, s);
+
+                x_mis = X_old(indexMissing{s}, :);
+                x_mis(:, s) = [];
+
+                NumTrees = 20;
+
+                if any(index_numeric == s)
+                    Mdl = TreeBagger(NumTrees, x_obs, y_obs, 'Method', 'regression');
+                    y_misnew = predict(Mdl, x_mis);
+                else
+                    Mdl = TreeBagger(NumTrees, x_obs, y_obs, 'Method', 'classification');
+                    y_misnew = predict(Mdl, x_mis);
+                    y_misnew = str2double(y_misnew);
+                end
+
+                X_newimp = X_old;
+                X_newimp{indexMissing{s}, s} = y_misnew;
+
+                X_old = X_newimp;
+            end
+        end
+
+        Delta_N = sum(sum((X_newimp{:, index_numeric} - X_oldimp{:, index_numeric}).^2)) / sum(sum((X_newimp{:, index_numeric}).^2));
+
+        I = 0;
+        for j = 1:length(index_text)
+            j_text = index_text(j);
+            for i = 1:size(X, 1)
+                if isequal(X_newimp{i, j_text}, X_oldimp{i, j_text}) == 0
+                    I = I + 1;
+                end
+            end
+        end
+        Delta_F_denominator = sum(t{index_text, 2});
+        if Delta_F_denominator ~= 0
+            Delta_F{iteration} = I / Delta_F_denominator;
+        else
+            Delta_F{iteration} = 0;
+        end
+
+        diff_new = Delta_N + Delta_F{iteration};
+
+        X_initialguess = X_newimp;
+
+        iteration = iteration + 1;
+    end
+
+    X_imputed = X_oldimp;
+end
