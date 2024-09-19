@@ -1,3 +1,20 @@
+%% ===========================================================================================
+%% This function updates the encoding of the dataset after missing values have been imputed,
+%% which is used to recalculation the distance metric between samples.
+%%
+%% Inputs------
+%%    x_raw: The given dataset.
+%%    no_nom: Number of nominal attributes.
+%%    no_ord: Number of ordinal attributes.
+%%    no_num: Number of numerical attributes.
+%%    pm: A structure containing parameters such as the number of attributes and unique values for each attribute.
+%% Outputs------
+%%    x_raw: The preprocessed dataset with encoded values.
+%%    map_nom_inv: Inverse mappings for nominal attributes.
+%%    map_ord_inv: Inverse mappings for ordinal attributes.
+%%    map_num_inv: Inverse mappings for numerical attributes.
+%%    pm: Updated parameter matrix with information about the attributes.
+%% ===========================================================================================
 
 function [x_raw, map_nom_inv, map_ord_inv, map_num_inv,pm] = repreprocess_data(x_raw, no_nom, no_ord, no_num,pm)
    pm.no_ord_att = no_ord;
