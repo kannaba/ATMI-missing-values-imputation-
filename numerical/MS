@@ -1,0 +1,42 @@
+%% Mean Substitution
+%% ==============================================================================
+%% This function performs mean-based imputation on a dataset with missing values, 
+%% followed by k-means clustering and evaluation of the clustering results.
+
+%% Inputs-----
+%%   x_ori: The dataset with missing values.
+%%   ori: The original dataset with no missing values.
+%%   ori_label: The original labels of the dataset.
+%%   k: The number of clusters.
+%%   num_cols: Indices of numerical attributes.
+%%   cat_cols: Indices of categorical attributes.
+%% Outputs-----
+%%   mm_filled: The dataset after mean-based imputation.
+%%   mm_idx: Cluster indices for each data point after k-means clustering.
+%%   mm_purity: Purity score of the clustering.
+%%   mm_ARI: Adjusted Rand Index of the clustering.
+%%   mm_cvi: Silhouette index of the clustering.
+%%   mm_dbi: Davies-Bouldin Index of the clustering.
+%%   mm_rmse: Root Mean Square Error of the imputed values.
+
+%% ==============================================================================
+
+function [mm_filled, mm_idx, mm_purity, mm_ARI, mm_cvi, mm_dbi, mm_rmse] = mean_imputation_clustering(x_ori, ori, ori_label, k, num_cols, cat_cols)
+    % Mean-Based Imputation
+    mm_filled = x_ori;
+    for i = 1:size(mm_filled, 2)
+        mean_value = mean(mm_filled(:, i), 'omitnan');
+        missing_indices = isnan(mm_filled(:, i));
+        mm_filled(missing_indices, i) = mean_value;
+    end
+
+    % K-Means Clustering
+    [mm_idx, ~] = kmeans(mm_filled, k);
+
+    % Evaluation Metrics
+    mm_purity = purity_score(ori_label, mm_idx);
+    [~, mm_ARI] = randindex(ori_label, mm_idx);
+    mm_cvi = silhouette_index(mm_filled, mm_idx, 'y', num_cols, cat_cols);
+    mm_dbi = DBI(ori, mm_filled, mm_idx, 'y', num_cols, cat_cols);
+    [~, mm_rmse] = calculateRMSE(ori, x_ori, mm_filled, 'y');
+end
