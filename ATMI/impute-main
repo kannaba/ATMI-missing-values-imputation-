@@ -49,7 +49,7 @@ no_nom = length(lct_nom);
 no_ord = length(lct_ord);
 no_num = length(lct_num);
 
-[x_raw,idx,center,center_point, D] = pam2(10, k, x_raw,dissim);
+[x_raw,idx,center,center_point, D] = clustering(10, k, x_raw,dissim);
 
 [x_filled,x_ori_filled, idx, medoids] = pamImpute5(100, k, dissim,x_raw, S2_sort,S2_sort_beforecut,x_ori,missing_samples,intercost,no_nom,no_ord,no_num,map_nom_inv, map_ord_inv, map_num_inv,pm,cat_cols,num_cols, lct_nom, lct_ord, lct_num);
  
