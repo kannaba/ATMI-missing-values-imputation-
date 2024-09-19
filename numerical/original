@@ -1,3 +1,9 @@
+%% =======================================================================================
+%% The code performs data preprocessing, clustering, and evaluation for two pure numerical datasets: Iris and Wine. 
+%% It calculates various clustering metrics such as purity, Adjusted Rand Index (ARI), silhouette index(CVI), and Davies-Bouldin Index (DBI).
+%% =======================================================================================
+
+
 %% iris
 ori = readtable("iris.csv");
 ori.species = categorical(ori.species); 
@@ -53,7 +59,6 @@ k = 3;
 %compute  complete original pure and ARI
 ori_purity = purity_score(ori_label, ori_idx);
 [~, ori_ARI] = randindex(ori_label, ori_idx);
-%ori_nmi = nmi(ori_label, ori_idx);
 ori_cvi = silhouette_index(ori, ori_idx,'y',num_cols,cat_cols);
 ori_dbi = DBI(ori,ori, ori_idx,'y',num_cols,cat_cols);
 ori_mae=NaN;ori_rmse=NaN;
