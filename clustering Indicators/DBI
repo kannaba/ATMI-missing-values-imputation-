@@ -1,3 +1,21 @@
+%% DBI
+%% ===============================================================================================================
+%% This function calculates the Davies-Bouldin Index (DBI) for evaluating the quality of clustering. 
+%% The DBI is a metric that quantifies the average similarity ratio of each cluster with its most similar cluster, 
+%% considering both numerical and categorical data.
+
+%% Inputs---------
+%%     original_data: The original dataset with missing values.
+%%     filled_data: The dataset after missing values have been imputed.
+%%     idx: A vector of cluster indices for each data point.
+%%     normalize: A flag (‘y’ or ‘n’) indicating whether to normalize numerical data.
+%%     num_indices: Indices of numerical features in the dataset.
+%%     cat_indices: Indices of categorical features in the dataset.
+%% Outputs--------
+%%     DBI: The Davies-Bouldin Index, a value that indicates the clustering quality.
+%% ==================================================================================================================
+
+
 function DBI = DBI(original_data, filled_data, idx, normalize, num_indices, cat_indices)
     if strcmp(normalize, 'y') && ~isempty(num_indices)
         min_val = min([original_data(:, num_indices); filled_data(:, num_indices)], [], 1);
