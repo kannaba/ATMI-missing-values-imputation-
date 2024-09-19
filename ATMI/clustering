@@ -1,4 +1,21 @@
- function [data_new, idx, center,center_point, D] = clustering(n, k, data, dissim)
+%% =========================================================================================
+%% The clustering function performs clustering on a given dataset using a custom distance metric. It iteratively updates cluster centers to minimize the clustering cost, considering both numerical and categorical data.
+
+%% Inputs-----
+%%    n: The number of iterations for updating cluster centers.
+%%    k: The number of clusters.
+%%    data: The incomplete dataset to be clustered.
+%%    dissim: The dissimilarity measure used for calculating distances between samples.
+%% Outputs-----
+%%    data_new: The dataset with updated cluster labels.
+%%    idx: A vector of cluster indices for each data point.
+%%    center: The final cluster centers.
+%%    center_point: Indices of the final cluster centers in the dataset.
+%%    D: The distance matrix representing pairwise distances between samples.
+%% =========================================================================================
+
+
+function [data_new, idx, center,center_point, D] = clustering(n, k, data, dissim)
     data_new = data;
     data_now = data;
     idx = zeros(size(data, 1), 1);
