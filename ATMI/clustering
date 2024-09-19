@@ -1,0 +1,104 @@
+ function [data_new, idx, center,center_point, D] = clustering(n, k, data, dissim)
+    data_new = data;
+    data_now = data;
+    idx = zeros(size(data, 1), 1);
+    att_cols = size(data, 2) - 1;
+    lab_col = size(data, 2);
+    sample_num = size(data, 1);clustering
+
+    D = sample_metric (data(:,1:att_cols),dissim);
+
+    valid_samples = any(~isnan(data(:, 1:att_cols)), 2);
+    valid_sample_indices = find(valid_samples);
+
+    center_point = zeros(1, k);
+    center_point(1) = valid_sample_indices(randi(length(valid_sample_indices)));
+    for i = 2:k
+        min_distances = min(D(valid_sample_indices, center_point(1:i-1)), [], 2);
+        probabilities = min_distances / sum(min_distances);
+
+        probabilities(probabilities < 0) = 0;
+        if all(probabilities == 0) || any(isnan(probabilities))
+            center_point(1) = valid_sample_indices(randi(length(valid_sample_indices)));
+            min_distances = min(D(valid_sample_indices, center_point(1:i-1)), [], 2);
+            probabilities = min_distances / sum(min_distances);
+            probabilities(probabilities < 0) = 0;
+            if all(probabilities == 0) || any(isnan(probabilities))
+                probabilities = ones(size(probabilities)) / length(probabilities);
+            end
+        end
+        
+        center_point(i) = valid_sample_indices(randsample(length(valid_sample_indices), 1, true, probabilities));
+    end
+
+    center_point_now = center_point;
+    center = data_new(center_point, 1:att_cols);
+
+    distance = zeros(size(data_new, 1), k);
+    distance_now = zeros(size(data_now, 1), k); 
+    lost = ones(sample_num, k) * inf; 
+    no_update_count = 0;
+
+    for j = 1:k
+        for i = 1:sample_num
+            distance(i, j) = D(i, center_point(j));
+        end
+    end
+
+    [~, data_new(:, lab_col)] = min(distance, [], 2);
+
+    for i = 1:n 
+        updated = false; 
+        for m = 1:k
+            for l = 1:sample_num
+                 center_now = center;
+                 center_point_now = center_point;
+                 center_now(m, :) = data_now(l, 1:att_cols);
+                 center_point_now(m) = l;
+                 for j = 1:k
+                     for p = 1:sample_num
+                         distance_now(p, j) = D(p, center_point_now(j));
+                     end
+                 end
+                 [~, data_now(:, lab_col)] = min(distance_now, [], 2);
+                 after_cost = 0;
+                 before_cost = 0;
+                 for z = 1:sample_num
+                     after_cost = after_cost + D(z, center_point_now(data_now(z, lab_col)));
+                     %after_cost = after_cost + distance_now(z,center_point_now(z));
+                     before_cost = before_cost + D(z, center_point(data_new(z, lab_col)));
+                 end
+                 lost(l, m) = after_cost - before_cost;
+            end
+        end
+    
+        if min(lost(:)) < 0
+           [index_l, index_m] = find(lost == min(lost(:)), 1);
+            center(index_m, :) = data_now(index_l, 1:att_cols);
+            center_point(index_m) = index_l;
+            updated = true;
+        end
+    
+        for j = 1:k
+            for u = 1:sample_num
+                distance(u, j) = D(u, center_point(j));
+            end
+         end
+    
+         [~, data_new(:, lab_col)] = min(distance, [], 2);
+         idx = data_new(:, lab_col);
+    
+         if updated
+            no_update_count = 0;
+         else
+            no_update_count = no_update_count + 1;
+         end
+         if no_update_count >= 2
+            break;
+         end
+    end
+end
+
+
+
+
