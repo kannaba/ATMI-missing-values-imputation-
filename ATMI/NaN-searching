@@ -1,3 +1,16 @@
+%% ================================================================================================
+%% This function identifies the natural neighbors for a given sample within a cluster.
+%% This function is used for handling missing data by finding the natural neighbors for a given incomplete object within a cluster.
+
+%% Inputs-----
+%%     candidate: The other objects in the cluster where the current target object is located.
+%%     sample: The target object.
+%%     cluster_members_indices: Indices of the objects that belong to the same cluster as the candidate.
+%%     D: A distance matrix representing the pairwise distances between objects.
+%% Outputs-----
+%%     myNaN: Indices of the natural neighbors for the candidate objects within the cluster.
+%% ================================================================================================
+
 function [myNaN] = MyNaN(candidate,sample,cluster_members_indices, D)
 minK = 2;
 
